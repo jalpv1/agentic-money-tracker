@@ -1,6 +1,6 @@
 import datetime
 
-from src import db
+from src import db, vector_db
 from src.bank import fio
 from src.parsing import transactions
 
@@ -15,7 +15,13 @@ def sync() -> int:
     last = db.last_synced_date()
     since = max(earliest, last - datetime.timedelta(days=OVERLAP_DAYS)) if last else earliest
 
-    new = db.save_raw(fio.fetch(since, today))
+    txns = fio.fetch(since, today)
+    new = db.save_raw(txns)
+    vector_db.save_raw(txns)
+
     for row in db.unparsed():
-        db.save_parsed(row["transaction_id"], transactions.parse(row["type"], row["remittance_info"]))
+        tid = row["transaction_id"]
+        parsed = transactions.parse(row["type"], row["remittance_info"])
+        db.save_parsed(tid, parsed)
+        vector_db.save_parsed(tid, parsed)
     return new

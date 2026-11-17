@@ -13,3 +13,4 @@ class Parsed(BaseModel):
     purchase_date: datetime.date | None = None
     orig_amount: float | None = None
     orig_currency: str | None = None
+    category: str | None = None

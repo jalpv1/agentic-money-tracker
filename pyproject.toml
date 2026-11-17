@@ -8,6 +8,8 @@ dependencies = [
     "pydantic>=2.0",
     "fastapi>=0.110.0",
     "fio_banka",
+    "chromadb",
+    "sentence-transformers"
 ]
 [dependency-groups]
 dev = [

@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS parsed_transactions (
     country TEXT,
     purchase_date TEXT,
     orig_amount REAL,
-    orig_currency TEXT
+    orig_currency TEXT,
+    category TEXT
 );
 """
 
@@ -36,7 +37,16 @@ def connect() -> sqlite3.Connection:
     conn = sqlite3.connect(config.DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    _migrate(conn)
     return conn
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """CREATE TABLE IF NOT EXISTS won't add columns to an existing DB, so add them here."""
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(parsed_transactions)")}
+    if "category" not in cols:
+        conn.execute("ALTER TABLE parsed_transactions ADD COLUMN category TEXT")
+        conn.commit()
 
 
 def last_synced_date() -> datetime.date | None:
@@ -77,8 +87,11 @@ def save_parsed(transaction_id: str, parsed: Parsed) -> None:
     data["parse_ok"] = int(data["parse_ok"])
     with closing(connect()) as conn, conn:
         conn.execute(
-            """INSERT OR REPLACE INTO parsed_transactions VALUES
+            """INSERT OR REPLACE INTO parsed_transactions
+               (transaction_id, kind, parse_ok, merchant_raw, merchant_key, city,
+                country, purchase_date, orig_amount, orig_currency, category)
+               VALUES
                (:transaction_id, :kind, :parse_ok, :merchant_raw, :merchant_key, :city,
-                :country, :purchase_date, :orig_amount, :orig_currency)""",
+                :country, :purchase_date, :orig_amount, :orig_currency, :category)""",
             {"transaction_id": transaction_id, **data},
         )
