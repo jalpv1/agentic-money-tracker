@@ -9,7 +9,10 @@ dependencies = [
     "fastapi>=0.110.0",
     "fio_banka",
     "chromadb",
-    "sentence-transformers"
+    "sentence-transformers",
+    "langgraph>=1.2.22",
+    "langchain-anthropic>=1.7.10",
+    "python-dotenv>=1.2.4",
 ]
 [dependency-groups]
 dev = [
