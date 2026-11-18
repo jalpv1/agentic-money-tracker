@@ -88,6 +88,9 @@ def unparsed() -> list[dict]:
             "transaction_id": tid,
             "type": meta.get("type") or None,
             "remittance_info": meta.get("remittance_info") or None,
+            "amount": meta["amount"],
+            "currency": meta["currency"],
+            "date": meta["date"],
         }
         for tid, meta in zip(raw_data["ids"], raw_data["metadatas"])
         if tid not in parsed_ids

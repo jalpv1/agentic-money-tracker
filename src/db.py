@@ -27,7 +27,10 @@ CREATE TABLE IF NOT EXISTS parsed_transactions (
     purchase_date TEXT,
     orig_amount REAL,
     orig_currency TEXT,
-    category TEXT
+    category TEXT,
+    amount REAL,
+    currency TEXT,
+    booked_date TEXT
 );
 """
 
@@ -44,9 +47,11 @@ def connect() -> sqlite3.Connection:
 def _migrate(conn: sqlite3.Connection) -> None:
     """CREATE TABLE IF NOT EXISTS won't add columns to an existing DB, so add them here."""
     cols = {r["name"] for r in conn.execute("PRAGMA table_info(parsed_transactions)")}
-    if "category" not in cols:
-        conn.execute("ALTER TABLE parsed_transactions ADD COLUMN category TEXT")
-        conn.commit()
+    for name, sql_type in (("category", "TEXT"), ("amount", "REAL"),
+                           ("currency", "TEXT"), ("booked_date", "TEXT")):
+        if name not in cols:
+            conn.execute(f"ALTER TABLE parsed_transactions ADD COLUMN {name} {sql_type}")
+    conn.commit()
 
 
 def last_synced_date() -> datetime.date | None:
@@ -75,7 +80,7 @@ def save_raw(txns: list[dict]) -> int:
 def unparsed() -> list[sqlite3.Row]:
     with closing(connect()) as conn:
         return conn.execute(
-            """SELECT r.transaction_id, r.type, r.remittance_info
+            """SELECT r.transaction_id, r.type, r.remittance_info, r.amount, r.currency, r.date
                FROM raw_transactions r
                LEFT JOIN parsed_transactions p USING (transaction_id)
                WHERE p.transaction_id IS NULL"""
@@ -89,9 +94,11 @@ def save_parsed(transaction_id: str, parsed: Parsed) -> None:
         conn.execute(
             """INSERT OR REPLACE INTO parsed_transactions
                (transaction_id, kind, parse_ok, merchant_raw, merchant_key, city,
-                country, purchase_date, orig_amount, orig_currency, category)
+                country, purchase_date, orig_amount, orig_currency, category,
+                amount, currency, booked_date)
                VALUES
                (:transaction_id, :kind, :parse_ok, :merchant_raw, :merchant_key, :city,
-                :country, :purchase_date, :orig_amount, :orig_currency, :category)""",
+                :country, :purchase_date, :orig_amount, :orig_currency, :category,
+                :amount, :currency, :booked_date)""",
             {"transaction_id": transaction_id, **data},
         )

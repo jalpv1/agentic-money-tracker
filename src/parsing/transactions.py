@@ -24,14 +24,17 @@ def norm(s: str) -> str:
         s = s.replace(n, "")
     return re.sub(r"\s+", " ", s).strip()
 
-def parse(type_: str, info: str | None) -> Parsed:
+def parse(
+    type_: str, info: str | None, amount: float, currency: str, booked_date: datetime.date
+) -> Parsed:
+    booked = dict(amount=amount, currency=currency, booked_date=booked_date)
     kind = KIND.get(type_, "other")
     if kind != "card_purchase" or not info:
-        return Parsed(kind=kind, parse_ok=kind != "other", category=categorize(kind, None))
+        return Parsed(**booked, kind=kind, parse_ok=kind != "other", category=categorize(kind, None))
     body = info.removeprefix("Nákup:").strip()
     m = TAIL.search(body)
     if not m:
-        return Parsed(kind=kind, parse_ok=False)
+        return Parsed(**booked, kind=kind, parse_ok=False)
     parts = [p.strip() for p in body[:m.start()].split(",") if p.strip()]
     country = parts.pop() if parts and COUNTRY.match(parts[-1]) else None
     if parts and ZIP.match(parts[-1]):
@@ -40,7 +43,7 @@ def parse(type_: str, info: str | None) -> Parsed:
     merchant = parts[0] if parts else None
     merchant_key = norm(merchant) if merchant else None
     return Parsed(
-        kind=kind, parse_ok=merchant is not None,
+        **booked, kind=kind, parse_ok=merchant is not None,
         merchant_raw=merchant, merchant_key=merchant_key,
         city=city, country=country,
         purchase_date=datetime.date(int(m["y"]), int(m["m"]), int(m["d"])),

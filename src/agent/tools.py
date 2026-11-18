@@ -12,27 +12,25 @@ Direction = Literal["expense", "income", "all"]
 
 
 def _load(ids: list[str] | None = None) -> list[dict]:
-    """Join raw (amount, date) and parsed (category, merchant, ...) collections by id."""
-    raw, parsed = vector_db.connect()
-    r = raw.get(ids=ids, include=["metadatas"])
-    p = parsed.get(ids=ids, include=["metadatas"])
-    parsed_by_id = dict(zip(p["ids"], p["metadatas"]))
-    out = []
-    for tid, rm in zip(r["ids"], r["metadatas"]):
-        pm = parsed_by_id.get(tid, {})
-        out.append({
+    """Read parsed transactions."""
+    _, parsed = vector_db.connect()
+    p = parsed.get(ids=ids, include=["metadatas", "documents"])
+    return [
+        {
             "id": tid,
-            "date": rm["date"],
-            "amount": float(rm["amount"]),  # negative = money out
-            "currency": rm["currency"],
-            "kind": pm.get("kind", "unparsed"),
-            "merchant": pm.get("merchant_raw"),
-            "city": pm.get("city"),
-            "country": pm.get("country"),
-            "category": pm.get("category"),
-            "description": rm.get("remittance_info", ""),
-        })
-    return out
+            "date": m["booked_date"],
+            "amount": m["amount"],  # negative = money out
+            "currency": m["currency"],
+            "kind": m.get("kind", "unparsed"),
+            "merchant": m.get("merchant_raw"),
+            "city": m.get("city"),
+            "country": m.get("country"),
+            "category": m.get("category"),
+            "description": doc,
+        }
+        for tid, m, doc in zip(p["ids"], p["metadatas"], p["documents"])
+        if "booked_date" in m
+    ]
 
 
 def _filter(

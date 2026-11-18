@@ -4,6 +4,9 @@ from pydantic import BaseModel
 
 
 class Parsed(BaseModel):
+    amount: float
+    currency: str
+    booked_date: datetime.date
     kind: str
     parse_ok: bool
     merchant_raw: str | None = None
