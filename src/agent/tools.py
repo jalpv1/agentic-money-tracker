@@ -1,4 +1,5 @@
 """Agent tools over the vector DB. All numbers are computed here, never by the LLM."""
+
 from collections import defaultdict
 from typing import Literal
 
@@ -117,7 +118,12 @@ def spending_summary(
     for t in rows:
         groups[key(t)].append(abs(t["amount"]))
     result = [
-        {"group": g, "total": round(sum(v), 2), "count": len(v), "average": round(sum(v) / len(v), 2)}
+        {
+            "group": g,
+            "total": round(sum(v), 2),
+            "count": len(v),
+            "average": round(sum(v) / len(v), 2),
+        }
         for g, v in groups.items()
     ]
     result.sort(key=(lambda r: r["group"]) if group_by == "month" else (lambda r: -r["total"]))

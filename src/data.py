@@ -22,8 +22,11 @@ def sync() -> int:
     for row in db.unparsed():
         tid = row["transaction_id"]
         parsed = transactions.parse(
-            row["type"], row["remittance_info"],
-            float(row["amount"]), row["currency"], datetime.date.fromisoformat(row["date"]),
+            row["type"],
+            row["remittance_info"],
+            float(row["amount"]),
+            row["currency"],
+            datetime.date.fromisoformat(row["date"]),
         )
         db.save_parsed(tid, parsed)
         vector_db.save_parsed(tid, parsed)
