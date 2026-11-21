@@ -47,8 +47,12 @@ def connect() -> sqlite3.Connection:
 def _migrate(conn: sqlite3.Connection) -> None:
     """CREATE TABLE IF NOT EXISTS won't add columns to an existing DB, so add them here."""
     cols = {r["name"] for r in conn.execute("PRAGMA table_info(parsed_transactions)")}
-    for name, sql_type in (("category", "TEXT"), ("amount", "REAL"),
-                           ("currency", "TEXT"), ("booked_date", "TEXT")):
+    for name, sql_type in (
+        ("category", "TEXT"),
+        ("amount", "REAL"),
+        ("currency", "TEXT"),
+        ("booked_date", "TEXT"),
+    ):
         if name not in cols:
             conn.execute(f"ALTER TABLE parsed_transactions ADD COLUMN {name} {sql_type}")
     conn.commit()
@@ -64,8 +68,13 @@ def save_raw(txns: list[dict]) -> int:
     """Insert new transactions, ignoring ones already stored. Returns count inserted."""
     rows = [
         (
-            str(t["transaction_id"]), t["date"].isoformat(), str(t["amount"]), t["currency"],
-            t["type"], t["remittance_info"], json.dumps(t, default=str, ensure_ascii=False),
+            str(t["transaction_id"]),
+            t["date"].isoformat(),
+            str(t["amount"]),
+            t["currency"],
+            t["type"],
+            t["remittance_info"],
+            json.dumps(t, default=str, ensure_ascii=False),
         )
         for t in txns
     ]
