@@ -28,7 +28,7 @@ Rules:
 
 
 def agent(state: State):
-    system = SystemMessage(SYSTEM_PROMPT)
+    system = SystemMessage(SYSTEM_PROMPT.format(today=date.today().isoformat()))
     response = llm_with_tools.invoke([system, *state["messages"]])
     return {"messages": [response]}
 

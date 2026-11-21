@@ -13,6 +13,7 @@ dependencies = [
     "langgraph>=1.2.22",
     "langchain-anthropic>=1.7.10",
     "python-dotenv>=1.2.4",
+    "langchain-ollama>=1.1.0",
 ]
 [dependency-groups]
 dev = [
