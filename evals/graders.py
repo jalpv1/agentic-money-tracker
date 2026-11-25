@@ -1,6 +1,6 @@
 import re
 
-from evals.types import Case, Run, Verdict
+from evals.models import Case, Run, Verdict
 
 
 def numbers_in(text: str) -> list[float]:
@@ -62,4 +62,21 @@ def grounded():
         ungrounded = [n for n in numbers_in(run.reply)
                       if round(n, 2) not in allowed and not _is_date_like(n)]
         return Verdict(not ungrounded, f"numbers not in any tool output: {ungrounded}")
+    return check
+
+def matches(pattern: str):
+    """Reply must match the regex (case-insensitive)."""
+    rx = re.compile(pattern, re.IGNORECASE)
+    def check(run: Run, case: Case) -> Verdict:
+        ok = rx.search(run.reply) is not None
+        return Verdict(ok, "" if ok else f"reply does not match /{pattern}/")
+    return check
+
+
+def not_matches(pattern: str):
+    """Reply must NOT match the regex (case-insensitive)."""
+    rx = re.compile(pattern, re.IGNORECASE)
+    def check(run: Run, case: Case) -> Verdict:
+        ok = rx.search(run.reply) is None
+        return Verdict(ok, "" if ok else f"reply unexpectedly matches /{pattern}/")
     return check
